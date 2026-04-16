@@ -3,20 +3,50 @@
 namespace App\Http\Controllers;
 
 use App\Models\modelEmployee;
-
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Yajra\DataTables\Facades\DataTables;
 
 class AdminController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index() //listing
+    public function index(Request $request) //listing
     {
         //
-        $employees = modelEmployee::get();
-        return view('ajax', compact('employees'));
+       if ($request->ajax()) {
+
+        $employee = modelEmployee::select('id','name','email','mobile');
+
+        return DataTables::of($employee)
+            ->addColumn('action', function ($row) {
+
+                return '
+                    <button class="btn btn-primary editBtn"
+                        data-id="'.$row->id.'"
+                        data-name="'.$row->name.'"
+                        data-email="'.$row->email.'"
+                        data-mobile="'.$row->mobile.'"
+                        data-bs-toggle="modal"
+                        data-bs-target="#myEditModal">
+                        Edit
+                    </button>
+
+                    <button class="btn btn-danger deleteBtn"
+                        data-id="'.$row->id.'">
+                        Delete
+                    </button>
+                ';
+            })
+            ->rawColumns(['action']) 
+            ->make(true);
+    }
+        return view("ajax");
+        
+        //$employees = modelEmployee::get();
+       // return view('ajax', compact('employees'));
     }
 
 
@@ -27,7 +57,7 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|min:3|max:20',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:model_employees',
             'password' => 'required|min:6',
             'mobile' => 'required'
 
